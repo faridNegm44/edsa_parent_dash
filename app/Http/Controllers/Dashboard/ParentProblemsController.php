@@ -673,7 +673,11 @@ class ParentProblemsController extends Controller
             ->make(true);
 
         }elseif(auth()->user()->user_status == 2 || auth()->user()->user_status == 4){
-            $all = ParentProblems::where('staff_id', auth()->user()->id)->orWhere('staff_id', null)->get();
+            $all = ParentProblems::where('staff_id', auth()->user()->id)
+                                ->orWhereNull('date_reference')
+                                ->orWhere('staff_id', null)
+                                ->get();
+            
             return DataTables::of($all)
             ->addColumn('parent_id', function($d){
                 $parent_id = $d->parent['name'];
@@ -1338,4 +1342,3 @@ class ParentProblemsController extends Controller
         }
     // Report end
 }
-
