@@ -1,0 +1,46 @@
+* {
+    font-family: cairo;
+}
+
+.errors {
+    color: red;
+}
+
+
+/* .snner-grow {
+    marin: 80px auto;
+    wih: 80px;
+    hht: 80px;
+    dilay: block;
+} */
+
+
+/* #notifIt {
+    z-idex: 100000000;
+} */
+
+
+/* .icn_sidebar:hover {
+    color: #FFF;
+    lay:
+}
+.eors {
+    cr: #f35f5f;
+    fo-size: 13px;
+    position: relative;
+    _sidebar:hover {
+        cor: red;
+    }
+    
+    r: #f35f5f;
+    f-size: 13px;
+    postion: relative;
+    icon_sidebar:hover {
+        r: red;
+    } */
+
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+    .app-sidebar {
+        margin-top: 90px;
+    }
+}

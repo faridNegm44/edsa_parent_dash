@@ -1,0 +1,577 @@
+if(auth()->user()->user_status == 1){
+$all = ParentProblems::where('problem_status' , 'جاري حلها')->get();
+return DataTables::of($all)
+->addColumn('parent_id', function($d){
+    $parent_id = $d->parent['name'];
+    $readed = $d->readed == 1 ? 'تمت القراءة' : '' ;
+
+    return $parent_id.
+        '<div class="text-primary" style="margin: 10px 0px 0px;>
+            <i class="fa fa-comment" style="margin: 0px 3px;"></i>
+            '.ProblemComments::where('problem_id', $d->id)->count().'
+        </div>'.
+        '<div style="text-decoration: underline;color: red;font-weight: bold;">
+            '.$readed.'
+        </div>';
+})
+->addColumn('problem', function($d){
+    $deadline = new DateTime($d->deadline);
+    $noow = $deadline->diff(new DateTime(Carbon::now()));
+
+    if(Carbon::now() > $d->deadline && $d->deadline != null){
+        return '
+            <div>
+                <div style="background: #E5DDC8;width: 100%;">
+                    '.$d->problem_type_relation['name'].'
+                </div>
+                <div style="background: #B5E5CF;" data-toggle="tooltip" data-placement="top" title="'.$d->problem.'">
+                    '.mb_strimwidth($d->problem, 0, 60).'
+                </div>
+            </div>
+
+            <div class="counters_class" style="margin: 3px auto 0px;width: 90%;">
+                <div class="row">
+                    <div class="col-md-3 seconds" style="background: #65463E; color: #fff;">
+                        <label for="">انتهي</label>
+                        <div><i class="fa fa-check"></i></div>
+                    </div>
+                    <div class="col-md-3 minutes" style="background: #94C973; color: #fff;opacity: .3;">
+                        <label for="">دقايق</label>
+                        <p>-</p>
+                    </div>
+                    <div class="col-md-3 hours" style="background: #FFB85D; color: #fff;opacity: .3;">
+                        <label for="">ساعات</label>
+                        <p>-</p>
+                    </div>
+                    <div class="col-md-3 days" style="background: #D48C70; color: #fff;opacity: .3;">
+                        <label for="">ايام</label>
+                        <p>-</p>
+                    </div>
+                </div>
+            </div>
+        ';
+    }elseif($d->deadline === null){
+        return '
+            <div>
+                <div style="background: #E5DDC8;width: 100%;">
+                    '.$d->problem_type_relation['name'].'
+                </div>
+                <div style="background: #B5E5CF;" data-toggle="tooltip" data-placement="top" title="'.$d->problem.'">
+                    '.mb_strimwidth($d->problem, 0, 60).'
+                </div>
+            </div>
+        ';
+    }else{
+        return '
+            <div>
+                <div style="background: #E5DDC8;width: 100%;">
+                    '.$d->problem_type_relation['name'].'
+                </div>
+                <div style="background: #B5E5CF;" data-toggle="tooltip" data-placement="top" title="'.$d->problem.'">
+                    '.mb_strimwidth($d->problem, 0, 60).'
+                </div>
+            </div>
+
+            <div class="counters_class" style="margin: 3px auto 0px;width: 90%;">
+                <div class="row">
+                    <div class="col-md-3 seconds" style="background: #65463E; color: #fff;">
+                        <label for="">انتهي</label>
+                        <div><i class="fa fa-times"></i></div>
+                    </div>
+                    <div class="col-md-3 minutes" style="background: #94C973; color: #000;">
+                        <label for="">دقايق</label>
+                        <p>'.$noow->i.'</p>
+                    </div>
+                    <div class="col-md-3 hours" style="background: #FFB85D; color: #000;">
+                        <label for="">ساعات</label>
+                        <p>'.$noow->h.'</p>
+                    </div>
+                    <div class="col-md-3 days" style="background: #D48C70; color: #000;">
+                        <label for="">ايام</label>
+                        <p>'.$noow->d.'</p>
+                    </div>
+                </div>
+            </div>
+        ';
+    }
+})
+->addColumn('staff_id_date_reference', function($d){
+    if($d->staff_id === null){
+        return '';
+    }elseif($d->deadline === null){
+        return '
+        <p>
+            <div style="margin: 0px 3px;font-weight:bold;background: #E7F2F8;">
+                <span>'. $d->staff['name'] .'</span>
+            </div>
+
+            <div>
+                <div style="margin: 2px 3px 0px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('d-m-Y') .'</span>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('h:i a') .'</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span></span>
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span></span>
+                </div>
+            </div>
+        </p>
+        ';
+    }else{
+        return '
+        <p>
+            <div style="margin: 0px 3px;font-weight:bold;background: #E7F2F8;">
+                <span>'. $d->staff['name'] .'</span>
+            </div>
+
+            <div>
+                <div style="margin: 2px 3px 0px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('d-m-Y') .'</span>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('h:i a') .'</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span>'. Carbon::parse($d->deadline)->format('d-m-Y') .'</span>
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span>'. Carbon::parse($d->deadline)->format('h:i a') .'</span>
+                </div>
+            </div>
+        </p>
+        ';
+    }
+})
+->addColumn('problem_rating', function($d){
+    $problem_rating = '';
+
+    if($d->problem_rating == 30){
+        $problem_rating = 'سهلة';
+    }elseif($d->problem_rating == 40){
+        $problem_rating = 'أقل من المتوسط';
+    }elseif($d->problem_rating == 50){
+        $problem_rating = 'متوسط';
+    }elseif($d->problem_rating == 90){
+        $problem_rating = 'صعبـة';
+    }elseif($d->problem_rating == 100){
+        $problem_rating = 'صعبـة جدآ';
+    }
+
+    return '
+        <select class="form-control change_problem_rating" res_id="'.$d->id.'">
+            <option value="">
+            </option>
+            <option value="30">
+                سهلة
+            </option>
+            <option value="40">
+                أقل من المتوسط
+            </option>
+            <option value="50">
+                متوسط
+            </option>
+            <option value="90">
+                صعبـة
+            </option>
+            <option value="100">
+                صعبـة جدآ
+            </option>
+            <option value="">
+                null
+            </option>
+        </select>
+
+        <p style="margin-top: 5px;font-weight: bold;">
+            <span class="badge badge-primary" style="font-size: 13px;">
+                '.$problem_rating.'
+            </span>
+        </p>
+    ';
+})
+->addColumn('staff_rating', function($d){
+    $staff_rating = '';
+
+    if($d->staff_rating == 30){
+        $staff_rating = 'ضعيف جدآ';
+    }elseif($d->staff_rating == 40){
+        $staff_rating = 'ضعيف';
+    }elseif($d->staff_rating == 50){
+        $staff_rating = 'جيد';
+    }elseif($d->staff_rating == 90){
+        $staff_rating = 'جيد جدآ';
+    }elseif($d->staff_rating == 100){
+        $staff_rating = 'ممتاز';
+    }
+
+    return '
+        <select class="form-control change_staff_rating" res_id="'.$d->id.'">
+            <option value="">
+
+            </option>
+            <option value="30">ضعيف جدآ</option>
+            <option value="40">ضعيف</option>
+            <option value="50">جيد</option>
+            <option value="90">جيد جدآ</option>
+            <option value="100">ممتاز</option>
+            <option value="">null</option>
+        </select>
+
+        <p style="margin-top: 5px;font-weight: bold;">
+            <span class="badge badge-success" style="font-size: 13px;">
+                '.$staff_rating.'
+            </span>
+        </p>
+    ';
+})
+->addColumn('problem_status', function($d){
+    return '
+        <select class="form-control change_problem_status" res_id="'.$d->id.'">
+            <option value="">
+
+            </option>
+            <option value="عاجل">
+                عاجل
+            </option>
+            <option value="جاري حلها">
+                جاري حلها
+            </option>
+            <option value="تم الإلغاء">
+                تم الإلغاء
+            </option>
+            <option value="تم حلها">
+                تم حلها
+            </option>
+            <option value="">
+                null
+            </option>
+        </select>
+
+        <p style="margin-top: 5px;font-weight: bold;">
+            <span class="badge badge-danger" style="font-size: 13px;">
+                '.$d->problem_status.'
+            </span>
+        </p>
+    ';
+})
+->addColumn('created_at_ended_at', function($d){
+    if($d->ended_at === null){
+        return '
+            <div class="text-center" style="padding: 10px;border-radius: 5px;width: 100px;margin-bottom: 7px;font-weight: bold;text-decoration: underline;x">'
+                . $d->created_at->format('d-m-Y') .
+                '<br />'
+                . $d->created_at->format('h:i a') .
+            '</div>
+        ';
+    }else{
+        return '
+            <div class="text-center" style="padding: 10px;border-radius: 5px;width: 100px;margin-bottom: 7px;font-weight: bold;text-decoration: underline;x">'
+                . $d->created_at->format('d-m-Y') .
+                '<br />'
+                . $d->created_at->format('h:i a') .
+            '</div>
+
+            <div class="text-center" style="background: #E57F84;color: #fff;border-radius: 5px;width: 100px;padding: 8px 10px 1px;font-weight: bold;">'
+                . Carbon::parse($d->ended_at)->format('d-m-Y') .
+                '<br />'
+                . Carbon::parse($d->ended_at)->format('h:i a') .
+            '</p>
+        ';
+    }
+})
+->addColumn('action', function($d){
+    $buttons = '<a href="'.url('dashboard/parent_problems/edit/'.$d->id).'" class="text-muted option-dots2" style="display: inline;margin: 0px 5px;"><i class="fa fa-pen"></i></a>';
+
+    $buttons .= '<a res_id="'.$d->id.'" data-effect="effect-sign" data-toggle="modal" href="#modaldemo8" class="text-muted option-dots2 modal-effect bt_modal" act="'.url('dashboard/parent_problems/reference/'.$d->id).'" style="display: inline;margin: 0px 5px;"><i class="fa fa-user text-success"></i></a>';
+
+    $buttons .= '<a res_id="'.$d->id.'" class="text-muted option-dots2 delete" style="display: inline;margin: 0px 5px;" ><i class="fa fa-trash" style="color: #f35f5f;"></i></a>';
+
+    return $buttons;
+
+})
+->rawColumns(['parent_id', 'problem', 'staff_id_date_reference', 'problem_rating', 'staff_rating', 'problem_status', 'created_at_ended_at', 'ended_at', 'action'])
+->make(true);
+
+}elseif(auth()->user()->user_status == 2 || auth()->user()->user_status == 4){
+$all = ParentProblems::where('problem_status' , 'جاري حلها')->where('staff_id', auth()->user()->id)->orWhere('staff_id', null)->get();
+return DataTables::of($all)
+->addColumn('parent_id', function($d){
+    $parent_id = $d->parent['name'];
+    $readed = $d->readed == 1 ? 'تمت القراءة' : '' ;
+
+    return $parent_id.
+        '<div class="text-primary" style="margin: 10px 0px 0px;>
+            <i class="fa fa-comment" style="margin: 0px 3px;"></i>
+            '.ProblemComments::where('problem_id', $d->id)->count().'
+        </div>'.
+        '<div style="text-decoration: underline;color: red;font-weight: bold;">
+            '.$readed.'
+        </div>';
+})
+->addColumn('problem', function($d){
+    $deadline = new DateTime($d->deadline);
+    $noow = $deadline->diff(new DateTime(Carbon::now()));
+
+    if(Carbon::now() > $d->deadline && $d->deadline != null){
+        return '
+            <div>
+                <div style="background: #E5DDC8;width: 100%;">
+                    '.$d->problem_type_relation['name'].'
+                </div>
+                <div style="background: #B5E5CF;" data-toggle="tooltip" data-placement="top" title="'.$d->problem.'">
+                    '.mb_strimwidth($d->problem, 0, 60).'
+                </div>
+            </div>
+
+            <div class="counters_class" style="margin: 3px auto 0px;width: 90%;">
+                <div class="row">
+                    <div class="col-md-3 seconds" style="background: #65463E; color: #fff;">
+                        <label for="">انتهي</label>
+                        <div><i class="fa fa-check"></i></div>
+                    </div>
+                    <div class="col-md-3 minutes" style="background: #94C973; color: #fff;opacity: .3;">
+                        <label for="">دقايق</label>
+                        <p>-</p>
+                    </div>
+                    <div class="col-md-3 hours" style="background: #FFB85D; color: #fff;opacity: .3;">
+                        <label for="">ساعات</label>
+                        <p>-</p>
+                    </div>
+                    <div class="col-md-3 days" style="background: #D48C70; color: #fff;opacity: .3;">
+                        <label for="">ايام</label>
+                        <p>-</p>
+                    </div>
+                </div>
+            </div>
+        ';
+    }elseif($d->deadline === null){
+        return '
+            <div>
+                <div style="background: #E5DDC8;width: 100%;">
+                    '.$d->problem_type_relation['name'].'
+                </div>
+                <div style="background: #B5E5CF;" data-toggle="tooltip" data-placement="top" title="'.$d->problem.'">
+                    '.mb_strimwidth($d->problem, 0, 60).'
+                </div>
+            </div>
+        ';
+    }else{
+        return '
+            <div>
+                <div style="background: #E5DDC8;width: 100%;">
+                    '.$d->problem_type_relation['name'].'
+                </div>
+                <div style="background: #B5E5CF;" data-toggle="tooltip" data-placement="top" title="'.$d->problem.'">
+                    '.mb_strimwidth($d->problem, 0, 60).'
+                </div>
+            </div>
+
+            <div class="counters_class" style="margin: 3px auto 0px;width: 90%;">
+                <div class="row">
+                    <div class="col-md-3 seconds" style="background: #65463E; color: #fff;">
+                        <label for="">انتهي</label>
+                        <div><i class="fa fa-times"></i></div>
+                    </div>
+                    <div class="col-md-3 minutes" style="background: #94C973; color: #000;">
+                        <label for="">دقايق</label>
+                        <p>'.$noow->i.'</p>
+                    </div>
+                    <div class="col-md-3 hours" style="background: #FFB85D; color: #000;">
+                        <label for="">ساعات</label>
+                        <p>'.$noow->h.'</p>
+                    </div>
+                    <div class="col-md-3 days" style="background: #D48C70; color: #000;">
+                        <label for="">ايام</label>
+                        <p>'.$noow->d.'</p>
+                    </div>
+                </div>
+            </div>
+        ';
+    }
+})
+->addColumn('staff_id_date_reference', function($d){
+    if($d->staff_id === null){
+        return '';
+    }elseif($d->deadline === null){
+        return '
+        <p>
+            <div style="margin: 0px 3px;font-weight:bold;background: #E7F2F8;">
+                <span>'. $d->staff['name'] .'</span>
+            </div>
+
+            <div>
+                <div style="margin: 2px 3px 0px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('d-m-Y') .'</span>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('h:i a') .'</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span></span>
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span></span>
+                </div>
+            </div>
+        </p>
+        ';
+    }else{
+        return '
+        <p>
+            <div style="margin: 0px 3px;font-weight:bold;background: #E7F2F8;">
+                <span>'. $d->staff['name'] .'</span>
+            </div>
+
+            <div>
+                <div style="margin: 2px 3px 0px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('d-m-Y') .'</span>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #EFE7BC;">
+                    <span>'. Carbon::parse($d->date_reference)->format('h:i a') .'</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span>'. Carbon::parse($d->deadline)->format('d-m-Y') .'</span>
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div style="margin: 0px 3px;font-weight:bold;background: #B4AAA9;color: #FFF;">
+                    <span>'. Carbon::parse($d->deadline)->format('h:i a') .'</span>
+                </div>
+            </div>
+        </p>
+        ';
+    }
+})
+->addColumn('problem_rating', function($d){
+    $problem_rating = '';
+
+    if($d->problem_rating == 30){
+        $problem_rating = 'سهلة';
+    }elseif($d->problem_rating == 40){
+        $problem_rating = 'أقل من المتوسط';
+    }elseif($d->problem_rating == 50){
+        $problem_rating = 'متوسط';
+    }elseif($d->problem_rating == 90){
+        $problem_rating = 'صعبـة';
+    }elseif($d->problem_rating == 100){
+        $problem_rating = 'صعبـة جدآ';
+    }
+
+    return '
+        <p style="margin-top: 5px;font-weight: bold;">
+            <span class="badge badge-primary" style="font-size: 13px;">
+                '.$problem_rating.'
+            </span>
+        </p>
+    ';
+})
+->addColumn('staff_rating', function($d){
+    $staff_rating = '';
+
+    if($d->staff_rating == 30){
+        $staff_rating = 'ضعيف جدآ';
+    }elseif($d->staff_rating == 40){
+        $staff_rating = 'ضعيف';
+    }elseif($d->staff_rating == 50){
+        $staff_rating = 'جيد';
+    }elseif($d->staff_rating == 90){
+        $staff_rating = 'جيد جدآ';
+    }elseif($d->staff_rating == 100){
+        $staff_rating = 'ممتاز';
+    }
+
+    return '
+        <p style="margin-top: 5px;font-weight: bold;">
+            <span class="badge badge-success" style="font-size: 13px;">
+                '.$staff_rating.'
+            </span>
+        </p>
+    ';
+})
+->addColumn('problem_status', function($d){
+    return '
+        <select class="form-control change_problem_status" res_id="'.$d->id.'">
+            <option value="">
+
+            </option>
+            <option value="عاجل">
+                عاجل
+            </option>
+            <option value="جاري حلها">
+                جاري حلها
+            </option>
+            <option value="تم الإلغاء">
+                تم الإلغاء
+            </option>
+            <option value="تم حلها">
+                تم حلها
+            </option>
+            <option value="">
+                null
+            </option>
+        </select>
+
+        <p style="margin-top: 5px;font-weight: bold;">
+            <span class="badge badge-danger" style="font-size: 13px;">
+                '.$d->problem_status.'
+            </span>
+        </p>
+    ';
+})
+->addColumn('created_at_ended_at', function($d){
+    if($d->ended_at === null){
+        return '
+            <div class="text-center" style="padding: 10px;border-radius: 5px;width: 100px;margin-bottom: 7px;font-weight: bold;text-decoration: underline;x">'
+                . $d->created_at->format('d-m-Y') .
+                '<br />'
+                . $d->created_at->format('h:i a') .
+            '</div>
+        ';
+    }else{
+        return '
+            <div class="text-center" style="padding: 10px;border-radius: 5px;width: 100px;margin-bottom: 7px;font-weight: bold;text-decoration: underline;x">'
+                . $d->created_at->format('d-m-Y') .
+                '<br />'
+                . $d->created_at->format('h:i a') .
+            '</div>
+
+            <div class="text-center" style="background: #E57F84;color: #fff;border-radius: 5px;width: 100px;padding: 8px 10px 1px;font-weight: bold;">'
+                . Carbon::parse($d->ended_at)->format('d-m-Y') .
+                '<br />'
+                . Carbon::parse($d->ended_at)->format('h:i a') .
+            '</p>
+        ';
+    }
+})
+->addColumn('action', function($d){
+    $buttons = '<a href="'.url('dashboard/parent_problems/edit/'.$d->id).'" class="text-muted option-dots2" style="display: inline;margin: 0px 5px;"><i class="fa fa-pen"></i></a>';
+
+    if($d->staff_id == null){
+        $buttons .= '<a res_id="'.$d->id.'" data-effect="effect-sign" data-toggle="modal" href="#modaldemo8" class="text-muted option-dots2 modal-effect bt_modal" act="'.url('dashboard/parent_problems/reference/'.$d->id).'" style="display: inline;margin: 0px 5px;"><i class="fa fa-user text-success"></i></a>';
+    }
+
+    $buttons .= '<a res_id="'.$d->id.'" class="text-muted option-dots2 delete" style="display: inline;margin: 0px 5px;" ><i class="fa fa-trash" style="color: #f35f5f;"></i></a>';
+
+    return $buttons;
+
+})
+->rawColumns(['parent_id', 'problem', 'staff_id_date_reference', 'problem_rating', 'staff_rating', 'problem_status', 'created_at_ended_at', 'ended_at', 'action'])
+->make(true);
+}
