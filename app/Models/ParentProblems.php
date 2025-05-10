@@ -10,7 +10,7 @@ class ParentProblems extends Model
     protected $table = 'parent_problems';
 
     protected $fillable = [
-        'parent_id', 'problem', 'problem_status', 'problem_rating', 'staff_id', 'staff_rating', 'problem_type', 'date_reference', 'deadline', 'ended_at', 'readed', 'created_at'
+        'parent_id', 'isParentWriten', 'problem', 'problem_status', 'problem_rating', 'staff_id', 'staff_rating', 'problem_type', 'date_reference', 'deadline', 'ended_at', 'readed', 'created_at'
     ];
 
 

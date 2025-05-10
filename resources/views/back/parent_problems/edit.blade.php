@@ -132,7 +132,14 @@
                             @endif
                             <div class="form-group mg-b-20">
                                 <label for="problem" style="margin-bottom: 10px;text-decoration: underline;"> مضمون الرسالة</label>
-                                <textarea class="form-control" name="problem" id="problem" placeholder="مضمون الرسالة" rows="6">{{ $find['problem'] }}</textarea>
+                                @if ($item->isParentWriten == 1)
+                                    <textarea class="form-control" name="problem" id="problem" placeholder="مضمون الرسالة" rows="6">{{ $find['problem'] }}</textarea>
+                                    @else                            
+                                    <p> 
+                                        <mark>{{ $find['problem'] }}</mark>
+                                    </p>
+                                    <input type="hidden" name="problem" id="problem" value="{{ $find['problem'] }}">
+                                @endif
                                 <p class="errors" id="errors-problem"></p>
                             </div>
                             <div class="form-group mg-b-20">
@@ -529,6 +536,17 @@
 
     {{-- End Comment Area --}}
 
+
+
+    {{-- start check if emplot check to button تمت القراءه ام لاء --}}
+    @if (auth()->user()->user_status == 2)
+        @if ($find['readed']  != 1)    
+            <script>
+                alert('من فضلك قم بتظليل مربع الاختيار الخاص بتمت القراءة');
+            </script>
+        @endif
+    @endif
+    {{-- end check if emplot check to button تمت القراءه ام لاء --}}
 
 
     @include('back.user.delete');

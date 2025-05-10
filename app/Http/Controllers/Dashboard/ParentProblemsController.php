@@ -65,6 +65,7 @@ class ParentProblemsController extends Controller
             'problem_type' => request('problem_type'),
             'problem' => request('problem'),
             'parent_id' => request('parent_id'),
+            'isParentWriten' => '1',
             'staff_id' => request('parent_id') == auth()->user()->id ? null : auth()->user()->id,
             'date_reference' => $date_reference,
             'created_at' => $created_at,
@@ -1088,7 +1089,19 @@ class ParentProblemsController extends Controller
                 }
             })
             ->addColumn('action', function($d){
-                $buttons = '<a href="'.url('dashboard/parent_problems/edit/'.$d->id).'" class="text-muted option-dots2" style="display: inline;margin: 0px 5px;"><i class="fa fa-pen"></i></a>';
+                $buttons = '';
+
+                if($d->problem_status == 'تم حلها' || $d->problem_status == 'تم الإلغاء'){
+                    $buttons .= '
+                                <a class="ThePhone2 text-right text-success d-block" href="https://wa.me/201062808121" target="_blank" rel="noopener noreferrer">
+                                    <i class="fab fa-whatsapp" style="margin-right: 5px; position: relative; top: 2px; font-size: 15px;"></i>
+                                    تواصل معنا  
+                                </a>                            
+                            ';
+                }else{
+                    $buttons = '<a href="'.url('dashboard/parent_problems/edit/'.$d->id).'" class="text-muted option-dots2" style="display: inline;margin: 0px 5px;"><i class="fa fa-pen"></i></a>';
+                }
+                
 
                 if(auth()->user()->user_status == 1){
                     $buttons .= '<a res_id="'.$d->id.'" class="text-muted option-dots2 delete" style="display: inline;margin: 0px 5px;" ><i class="fa fa-trash" style="color: #f35f5f;"></i></a>';
