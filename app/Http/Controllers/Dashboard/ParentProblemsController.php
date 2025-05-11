@@ -46,40 +46,62 @@ class ParentProblemsController extends Controller
             'problem.required' => 'مضمون الرسالة مطلوب',
         ]);
 
-        if(auth()->user()->user_status == 1){
-            $created_at = request('created_at') == null ? date('Y-m-d h:i:s') : request('created_at');
-            $date_reference = null;
 
-        }elseif(auth()->user()->user_status == 2){
-            $created_at = request('created_at') == null ? date('Y-m-d h:i:s') : request('created_at');
-            $date_reference = Carbon::now();
-            $getRateProblemType = DB::table('problem_types')->where('id', request('problem_type'))->first();
+        DB::transaction(function () {
+            
+            if(auth()->user()->user_status == 1){
+                $created_at = request('created_at') == null ? date('Y-m-d h:i:s') : request('created_at');
+                $date_reference = null;
+    
+            }elseif(auth()->user()->user_status == 2){
+                $created_at = request('created_at') == null ? date('Y-m-d h:i:s') : request('created_at');
+                $date_reference = Carbon::now();
+                $getRateProblemType = DB::table('problem_types')->where('id', request('problem_type'))->first();
+    
+            }elseif(auth()->user()->user_status == 3){
+                $created_at = Carbon::now();
+                $date_reference = null;
+                $isParentWriten = auth()->user()->id;
+                $getRateProblemType = DB::table('problem_types')->where('id', request('problem_type'))->first();
+            }
+    
+            $getId = ParentProblems::insertGetId([
+                'problem_type' => request('problem_type'),
+                'problem' => trim( request('problem') ),
+                'parent_id' => request('parent_id'),
+                'isParentWriten' => $isParentWriten ?? null,
+                'staff_id' => request('parent_id') == auth()->user()->id ? null : auth()->user()->id,
+                'date_reference' => $date_reference,
+                'created_at' => $created_at,
+                'problem_rating' => request('problem_rating') ?? $getRateProblemType->rate,
+            ]);
 
-        }else{
-            $created_at = Carbon::now();
-            $date_reference = null;
-            $getRateProblemType = DB::table('problem_types')->where('id', request('problem_type'))->first();
-        }
+            DB::table('parent_problems_history')->insert([
+                'problem_id' => $getId,
+                'problem_after_edit' => trim( request('problem') ),
+                'user_id' => auth()->user()->id,
+                'created_at' => $created_at,
+            ]);
 
-        ParentProblems::create([
-            'problem_type' => request('problem_type'),
-            'problem' => request('problem'),
-            'parent_id' => request('parent_id'),
-            'isParentWriten' => '1',
-            'staff_id' => request('parent_id') == auth()->user()->id ? null : auth()->user()->id,
-            'date_reference' => $date_reference,
-            'created_at' => $created_at,
-            'problem_rating' => request('problem_rating') ?? $getRateProblemType->rate,
-        ]);
+        });
+
+
 
     }
 
     public function edit($id)
     {
         $find = ParentProblems::where('id', $id)->first();
+        $find_history = DB::table('parent_problems_history')
+                            ->leftJoin('users', 'users.id', 'parent_problems_history.user_id')
+                            ->where('parent_problems_history.problem_id', $id)
+                            ->orderBy('parent_problems_history.id', 'asc')
+                            ->select('parent_problems_history.*', 'users.name', 'users.user_status')
+                            ->get();
+
         $parents = Parents::all();
         $comments = ProblemComments::orderBy('id', 'DESC')->where('problem_id' , $id)->get();
-        return view('back/parent_problems/edit', compact('parents', 'find', 'comments'));
+        return view('back/parent_problems/edit', compact('parents', 'find', 'comments', 'find_history'));
     }
 
     public function update(Request $request, $id)
@@ -93,31 +115,46 @@ class ParentProblemsController extends Controller
             'problem.required' => 'مضمون الرسالة مطلوب',
         ]);
 
-        $find = ParentProblems::where('id', $id)->first();
 
-        $created_at = "";
-        if(auth()->user()->user_status == 1){
-            $created_at = request('created_at') == null ? date('Y-m-d h:i:s') : request('created_at');
-        }else{
-            $created_at = $find['created_at'];
-        }
+        DB::transaction(function() use($id){
 
-        $ended_at = "";
-        if(auth()->user()->user_status == 1){
-            $ended_at = request('ended_at') == null ? null : request('ended_at');
-        }else{
-            $ended_at = $find['ended_at'];
-        }
+            $find = ParentProblems::where('id', $id)->first();
+    
+            $created_at = "";
+            if(auth()->user()->user_status == 1){
+                $created_at = request('created_at') == null ? date('Y-m-d h:i:s') : request('created_at');
+            }else{
+                $created_at = $find['created_at'];
+            }
+    
+            $ended_at = "";
+            if(auth()->user()->user_status == 1){
+                $ended_at = request('ended_at') == null ? null : request('ended_at');
+            }else{
+                $ended_at = $find['ended_at'];
+            }
+    
+            ParentProblems::where('id', $id)->update([
+                'problem_type' => request('problem_type'),
+                'problem' => trim( request('problem') ),
+                'parent_id' => request('parent_id'),
+                'readed' =>  auth()->user()->user_status == 3 ? 0 : request('readed'),
+                'created_at' => $created_at,
+                'ended_at' => $ended_at,
+                'problem_status' => request('ended_at') == null ? null : 'تم حلها',
+            ]);
 
-        ParentProblems::where('id', $id)->update([
-            'problem_type' => request('problem_type'),
-            'problem' => request('problem'),
-            'parent_id' => request('parent_id'),
-            'readed' =>  auth()->user()->user_status == 3 ? 0 : request('readed'),
-            'created_at' => $created_at,
-            'ended_at' => $ended_at,
-            'problem_status' => request('ended_at') == null ? null : 'تم حلها',
-        ]);
+            if(request('problem') && trim( request('problem') ) != $find['problem']){
+                DB::table('parent_problems_history')->insert([
+                    'problem_id' => $id,
+                    'problem_after_edit' => trim( request('problem') ),
+                    'user_id' => auth()->user()->id,
+                    'created_at' => now(),
+                ]);
+            }
+        });
+
+
    }
 
     public function destroy($id)
@@ -674,7 +711,11 @@ class ParentProblemsController extends Controller
             ->make(true);
 
         }elseif(auth()->user()->user_status == 2 || auth()->user()->user_status == 4){
-            $all = ParentProblems::where('staff_id', auth()->user()->id)->orWhere('staff_id', null)->get();
+            $all = ParentProblems::where('staff_id', auth()->user()->id)
+                                ->orWhereNull('date_reference')
+                                ->orWhere('staff_id', null)
+                                ->get();
+            
             return DataTables::of($all)
             ->addColumn('parent_id', function($d){
                 $parent_id = $d->parent['name'];
@@ -1351,4 +1392,3 @@ class ParentProblemsController extends Controller
         }
     // Report end
 }
-

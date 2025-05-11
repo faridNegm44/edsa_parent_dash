@@ -1,5 +1,6 @@
 <?php
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard/login', 'IndexController@login');
@@ -12,6 +13,11 @@ Route::post('/dashboard/parent/register', 'ParentController@register_post');
 Route::get('/dashboard/forget_password', 'IndexController@forget_password');
 Route::get('/dashboard/not_auth', 'IndexController@not_auth');
 
+
+Route::get('/clear-cache', function () {
+    Artisan::call('optimize:clear');
+    return 'Cache cleared!';
+});
 
 
 Route::group(['prefix' => 'dashboard', 'middleware' => 'checkLogin'], function(){

@@ -130,16 +130,33 @@
                                 </div>
                                 <br>
                             @endif
+                            
                             <div class="form-group mg-b-20">
                                 <label for="problem" style="margin-bottom: 10px;text-decoration: underline;"> مضمون الرسالة</label>
-                                @if ($item->isParentWriten == 1)
+
+                                @if (auth()->user()->user_status == 1 || auth()->user()->user_status == 2)
+                                    @if (!$find->isParentWriten)
+                                        <textarea class="form-control" name="problem" id="problem" placeholder="مضمون الرسالة" rows="6">{{ $find['problem'] }}</textarea>
+                                    
+                                    @elseif ($find->isParentWriten)
+                                        <p><mark>{{ $find['problem'] }}</mark></p>
+                                        <input type="hidden" name="problem" id="problem" value="{{ $find['problem'] }}">
+                                    @endif
+
+                                @elseif (auth()->user()->user_status == 3)
                                     <textarea class="form-control" name="problem" id="problem" placeholder="مضمون الرسالة" rows="6">{{ $find['problem'] }}</textarea>
-                                    @else                            
+                                @endif
+
+
+
+                                {{--@if ($find->parent_id == $find->isParentWriten)
+                                    <textarea class="form-control" name="problem" id="problem" placeholder="مضمون الرسالة" rows="6">{{ $find['problem'] }}</textarea>
+                                @else
                                     <p> 
                                         <mark>{{ $find['problem'] }}</mark>
                                     </p>
                                     <input type="hidden" name="problem" id="problem" value="{{ $find['problem'] }}">
-                                @endif
+                                @endif--}}
                                 <p class="errors" id="errors-problem"></p>
                             </div>
                             <div class="form-group mg-b-20">
@@ -151,6 +168,42 @@
 
             </div>
         </div>
+
+
+        {{-- بدايه قسم هيستوري التعديلات الي تمت علي مضمون الطلب --}}
+        @if (auth()->user()->user_status == 1 || auth()->user()->user_status == 2 || auth()->user()->user_status == 4)    
+            @if (count($find_history) > 1)    
+                <div class="card">
+                    <div class="card-body bg-light">
+                        <h5 class="text-center">
+                            سجل التعديلات علي الطلب
+                            <span class="bg bg-indigo rounded-5 text-white" style="padding: 0 5px;">{{ count($find_history) -1 }}</span>
+                        </h5>
+                        
+                        <br>
+                        <ul class="list-group">
+                            @foreach ($find_history as $index => $item)    
+                                <li class="list-group-item d-flex justify-content-between align-items-center {{ $item->user_status == 3 ? 'bg-indigo text-white' :'bg-white' }}" style="margin-bottom: 2px;">
+                                    <div> {{ $index+1 }} - 
+                                        <small>مضمون الطلب:</small> {!! $item->problem_after_edit !!}<br>
+                                    </div>
+                                    <div class="text-end">
+                                        <div><small style="font-weight: bold;">{{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y h:i A') }}</small></div>
+                                        <div><small style="font-weight: bold;">{{ $item->name }}</small></div>
+                                    </div>
+                                </li>                  
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+        @endif
+          
+        {{-- نهاية قسم هيستوري التعديلات الي تمت علي مضمون الطلب --}}
+
+
+
+
 
         {{-- Comments Card --}}
         <div class="card" id="comments_card">

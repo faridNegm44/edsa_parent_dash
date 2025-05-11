@@ -28,6 +28,7 @@ trait ParentProblemDatatableTrait{
             
             if (auth()->user()->user_status == 1) {
                 $all = ParentProblems::where('deadline', '<', Carbon::now())->get();
+                
             } elseif (auth()->user()->user_status == 2 || auth()->user()->user_status == 4) {
                 $all = ParentProblems::where('deadline', '<', Carbon::now())
                                     ->where(function($q){
